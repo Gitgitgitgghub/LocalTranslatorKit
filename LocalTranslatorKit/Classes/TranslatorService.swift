@@ -52,11 +52,32 @@ public extension TranslatorServiceProtocol {
 /// 懶得再封裝一次直接typealias 指定
 public typealias TranslateLanguage = MLKitTranslate.TranslateLanguage
 
+/// 支持的語言
+public enum LanguageSupportScope {
+    case all
+    case only(Set<TranslateLanguage>)
+}
+
 /// 實作 TranslatorServiceProtocol，提供實際翻譯邏輯
 public class TranslatorService: TranslatorServiceProtocol {
     
-    public init() {
+    private init() {
         
+    }
+    
+    public static let shared = TranslatorService()
+    
+    /// 支持的輸入語言
+    public var inputLanguageSupport: LanguageSupportScope = .all
+    
+    /// 設定支持的輸入語言
+    /// - Parameter scope: LanguageSupportScope
+    public func setInputLanguageSupportScope(scope: LanguageSupportScope) {
+        inputLanguageSupport = scope
+    }
+    
+    public func getTranslatorSupportLanguages() -> Set<TranslateLanguage> {
+        return TranslateLanguage.allLanguages()
     }
     
     public func translate(inputText: String, to target: TranslateLanguage) async throws -> TranslationResult {
@@ -67,6 +88,9 @@ public class TranslatorService: TranslatorServiceProtocol {
         let sourceLang = TranslateLanguage(rawValue: langCode)
         if sourceLang == target {
             return TranslationResult(originalText: inputText, detectedLanguage: langCode, translatedText: inputText)
+        }
+        if !isSupportedLanguage(sourceLang) {
+            throw TranslatorError.unsupportedLanguages(langurage: sourceLang)
         }
         let result = try await translate(text: inputText, from: sourceLang, to: target)
         return TranslationResult(originalText: inputText, detectedLanguage: langCode, translatedText: result)
@@ -85,6 +109,18 @@ public class TranslatorService: TranslatorServiceProtocol {
                     continuation.resume(returning: langCode ?? "und")
                 }
             }
+        }
+    }
+    
+    /// 是否為支持的語言
+    /// - Parameter language: 語言
+    /// - Returns: 是否支持
+    private func isSupportedLanguage(_ language: TranslateLanguage) -> Bool {
+        switch inputLanguageSupport {
+        case .all:
+            return true
+        case .only(let set):
+            return set.contains(language)
         }
     }
 

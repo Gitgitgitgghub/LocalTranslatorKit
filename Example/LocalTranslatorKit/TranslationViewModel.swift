@@ -5,14 +5,19 @@ import MLKitTranslate
 
 @MainActor
 class TranslationViewModel: ObservableObject {
-    @Published var inputText: String = ""
+    @Published var inputText: String = "サポートされていない言語"
     @Published var translatedText: String = ""
     @Published var errorMessage: String? = nil
     @Published var isLoading: Bool = false
+    @Published var selectedLanguage: TranslateLanguage = .english
+    let availableLanguages: [TranslateLanguage] = [
+            .english, .chinese, .thai, .vietnamese, .indonesian
+        ]
 
-    private let service: TranslatorServiceProtocol = TranslatorService()
+    private let service: TranslatorService = TranslatorService.shared
 
-    func translate(to target: TranslateLanguage = .english) {
+    func translate() {
+        service.setInputLanguageSupportScope(scope: .only([.chinese, .english, .japanese]))
         guard !inputText.isEmpty else {
             errorMessage = "請輸入要翻譯的文字"
             return
@@ -22,18 +27,18 @@ class TranslationViewModel: ObservableObject {
         translatedText = ""
 
         Task {
-            let result = await service.translateResult(inputText: inputText, to: target)
+            let result = await service.translateResult(inputText: inputText, to: selectedLanguage)
             isLoading = false
 
             switch result {
             case .success(let output):
-                print("translate: \(output)")
+                print("translate success: \(output)")
                 translatedText = output.translatedText
-
             case .failure(let error):
+                print("translate failure: \(error.localizedDescription)")
                 switch error {
                 case .modelNotDownloaded(let languages):
-                    await handleMissingModelsAndRetry(languages: languages, target: target)
+                    await handleMissingModelsAndRetry(languages: languages)
                 default:
                     errorMessage = error.localizedDescription
                 }
@@ -41,12 +46,12 @@ class TranslationViewModel: ObservableObject {
         }
     }
 
-    private func handleMissingModelsAndRetry(languages: [TranslateLanguage], target: TranslateLanguage) async {
+    private func handleMissingModelsAndRetry(languages: [TranslateLanguage]) async {
         for lang in languages {
             print("translate 下載缺少模組: \(lang.rawValue)")
             await download(language: lang)
         }
-        translate(to: target)
+        translate()
     }
 
     private func download(language: TranslateLanguage) async {

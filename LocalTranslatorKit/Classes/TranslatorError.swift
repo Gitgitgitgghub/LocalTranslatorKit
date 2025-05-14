@@ -13,6 +13,7 @@ public enum TranslatorError: Error, LocalizedError {
     case undetectedLanguage
     case modelNotDownloaded(languages: [TranslateLanguage])
     case translationFailed(Error)
+    case unsupportedLanguages(langurage: TranslateLanguage)
 
     public var errorDescription: String? {
         switch self {
@@ -23,6 +24,8 @@ public enum TranslatorError: Error, LocalizedError {
             return "缺少語言模型：\(names)"
         case .translationFailed(let error):
             return "翻譯失敗：\(error.localizedDescription)"
+        case .unsupportedLanguages(langurage: let langurage):
+            return "\(langurage) 為非支持的語言"
         }
     }
 }
