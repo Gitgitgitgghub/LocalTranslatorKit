@@ -10,14 +10,11 @@ class TranslationViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var isLoading: Bool = false
     @Published var selectedLanguage: TranslateLanguage = .english
-    let availableLanguages: [TranslateLanguage] = [
-            .english, .chinese, .thai, .vietnamese, .indonesian
-        ]
-
+    let availableLanguages: [TranslateLanguage] = TranslatorService.shared.getTranslatorSupportLanguages()
+    
     private let service: TranslatorService = TranslatorService.shared
-
+    
     func translate() {
-        service.setInputLanguageSupportScope(scope: .only([.chinese, .english, .japanese]))
         guard !inputText.isEmpty else {
             errorMessage = "請輸入要翻譯的文字"
             return
@@ -25,11 +22,10 @@ class TranslationViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         translatedText = ""
-
+        
         Task {
             let result = await service.translateResult(inputText: inputText, to: selectedLanguage)
             isLoading = false
-
             switch result {
             case .success(let output):
                 print("translate success: \(output)")
@@ -72,4 +68,4 @@ class TranslationViewModel: ObservableObject {
             }
         }
     }
-} 
+}

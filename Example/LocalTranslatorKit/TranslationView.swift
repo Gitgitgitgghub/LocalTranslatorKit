@@ -67,14 +67,7 @@ struct TranslationView: View {
     }
 
     private func displayName(for language: TranslateLanguage) -> String {
-        switch language {
-        case .english: return "英文"
-        case .chinese: return "中文"
-        case .thai: return "泰文"
-        case .vietnamese: return "越南文"
-        case .indonesian: return "印尼文"
-        default: return language.rawValue
-        }
+        return language.displayName
     }
 }
 

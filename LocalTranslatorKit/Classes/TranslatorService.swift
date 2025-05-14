@@ -52,6 +52,13 @@ public extension TranslatorServiceProtocol {
 /// 懶得再封裝一次直接typealias 指定
 public typealias TranslateLanguage = MLKitTranslate.TranslateLanguage
 
+extension TranslateLanguage {
+    /// displayName 例如en會取得English
+    public var displayName: String {
+        return Locale.current.localizedString(forLanguageCode: self.rawValue) ?? ""
+    }
+}
+
 /// 支持的語言
 public enum LanguageSupportScope {
     case all
@@ -70,14 +77,21 @@ public class TranslatorService: TranslatorServiceProtocol {
     /// 支持的輸入語言
     public var inputLanguageSupport: LanguageSupportScope = .all
     
-    /// 設定支持的輸入語言
+    /// 設定支持的輸入語言，.all就是輸入的所有語言都會響應下載模型and翻譯，也可以自行設定
+    /// 舉例來說如果設定.only([.vietnamese, .japanese])，代表輸入的語言是越南文或者日文才會進行翻譯，其他一律不予理會
     /// - Parameter scope: LanguageSupportScope
     public func setInputLanguageSupportScope(scope: LanguageSupportScope) {
         inputLanguageSupport = scope
     }
     
-    public func getTranslatorSupportLanguages() -> Set<TranslateLanguage> {
-        return TranslateLanguage.allLanguages()
+    /// 取得翻譯支援的所有語言(MLKit Translator 支持的所有語言)
+    /// - Returns: [TranslateLanguage]
+    public func getTranslatorSupportLanguages() -> [TranslateLanguage] {
+        let locale = Locale.current
+        return TranslateLanguage.allLanguages().sorted {
+          return locale.localizedString(forLanguageCode: $0.rawValue)!
+            < locale.localizedString(forLanguageCode: $1.rawValue)!
+        }
     }
     
     public func translate(inputText: String, to target: TranslateLanguage) async throws -> TranslationResult {
