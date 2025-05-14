@@ -15,6 +15,16 @@ LocalTranslatorKit 是一個基於 [Google MLKit](https://developers.google.com/
 
 ```
 pod 'LocalTranslatorKit', :git => 'https://github.com/Gitgitgitgghub/LocalTranslatorKit.git', :tag => '1.0.1'
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    if target.name == 'LocalTranslatorKit'
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.5'
+      end
+    end
+  end
+end
 ```
 
 📌 注意：MLKit 8.x 版本最低支援 `iOS 15.5`
